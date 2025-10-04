@@ -1,0 +1,140 @@
+:root {
+    --bg: #f5f9fb;
+    --card: #fff;
+    --primary: #0b7ea0;
+    --primary2: #078db8;
+    --text: #0b5f7d;
+    --muted: #4b6b77;
+    --danger: #c0392b;
+}
+
+* {
+    box-sizing: border-box
+}
+
+.badge {
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 6px
+}
+
+.wrap {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 12px
+}
+
+.greet {
+    margin: 16px 0 8px;
+    color: var(--text);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px
+}
+
+.grid > * { min-width: 0; }
+
+.card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+    padding: 20px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.card p, .card div, .card li, .card h3, .card h2 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.span-4 {
+    grid-column: span 12
+}
+
+.span-6 {
+    grid-column: span 12
+}
+
+@media(min-width:720px) {
+    .span-4 {
+        grid-column: span 4
+    }
+
+    .span-8 {
+        grid-column: span 8
+    }
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.stat h3 {
+    margin: 0;
+    color: var(--text)
+}
+
+.stat .num {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary)
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 14px;
+    margin: 8px 4px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, var(--primary), var(--primary2));
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none
+}
+
+.btn:hover {
+    opacity: .95
+}
+
+.btn.outline {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary)
+}
+
+.btn.danger {
+    background: var(--danger)
+}
+
+ul.clean {
+    list-style: none;
+    margin: 0;
+    padding: 0
+}
+
+.notif-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eef
+}
+
+.notif-item:last-child {
+    border-bottom: none
+}
+
+.notif-item div {
+    white-space: normal;
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 13px
+}
