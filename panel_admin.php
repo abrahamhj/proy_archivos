@@ -15,7 +15,7 @@ function get_count($conn, $sql)
   return 0;
 }
 $cnt_usuarios = get_count($conn, "SELECT COUNT(*) FROM usuarios WHERE rol='usuario'");
-$cnt_talleres = get_count($conn, "SELECT COUNT(*) FROM talleres");
+$cnt_talleres = get_count($conn, "SELECT COUNT(*) FROM talleres WHERE estado='activo'");
 $cnt_archivos = get_count($conn, "SELECT COUNT(*) FROM archivos");
 $cnt_insc_pend = get_count($conn, "SELECT COUNT(*) FROM inscripciones WHERE estado='pendiente'");
 $cnt_pagos_pend = get_count($conn, "SELECT COUNT(*) FROM pagos WHERE validado=0");
@@ -58,10 +58,10 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
         </a>
       </div>
       <ul class="menu" id="menu">
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Inicio</a></li>
+      <li><a href="panel_admin.php"><i class="fa-solid fa-gauge"></i> Panel</a></li>
         <li><a href="listar_talleres.php"><i class="fa-solid fa-chalkboard"></i> Talleres</a></li>
         <li><a href="listar_inscripciones.php"><i class="fa-solid fa-clipboard-list"></i> Inscripciones</a></li>
-        <li><a href="listar_pagados.php"><i class="fa-solid fa-cash-register"></i> Pagos</a></li>
+        <li><a href="pagos.php"><i class="fa-solid fa-cash-register"></i> Pagos</a></li>
         <li><a href="notificaciones_admin.php"><i class="fa-solid fa-bell"></i> Notificaciones <?php if ($notificaciones_pendientes > 0) echo '(' . $notificaciones_pendientes . ')'; ?></a></li>
       </ul>
       <div class="actions">
@@ -71,7 +71,7 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
   </header>
 
   <main>
-    <div class="wrap">
+    <div class="wrap-admin">
       <h2 class="greet">Hola, <?php echo htmlspecialchars($nombre); ?> 👑</h2>
       <div class="grid">
         <section class="card span-4">
@@ -99,7 +99,7 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
             <div class="num"><?php echo $cnt_archivos; ?></div>
           </div>
           <p class="muted">Archivos subidos</p>
-          <a class="btn" href="Ver_archivos.php">Ver archivos</a>
+          <a class="btn" href="archivos.php">Ver archivos</a>
         </section>
 
         <section class="card span-6">
@@ -110,7 +110,7 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
                 <h3 style="margin:0">Inscripciones</h3>
                 <div class="num"><?php echo $cnt_insc_pend; ?></div>
               </div>
-              <p class="muted" style="margin:.25rem 0 0;">Pendientes</p>
+              <p class="muted" style="margin:.25rem 0 0;">...</p>
               <a class="btn" href="listar_inscripciones.php" style="margin-top:8px;">Revisar</a>
             </div>
             <div class="info-card" style="border:1px solid #e7eef2;border-radius:12px;padding:12px;">
@@ -119,7 +119,7 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
                 <div class="num"><?php echo $cnt_pagos_pend; ?></div>
               </div>
               <p class="muted" style="margin:.25rem 0 0;">Por validar</p>
-              <a class="btn" href="listar_pagados.php" style="margin-top:8px;">Validar</a>
+              <a class="btn" href="pagos.php" style="margin-top:8px;">Validar</a>
             </div>
           </div>
         </section>

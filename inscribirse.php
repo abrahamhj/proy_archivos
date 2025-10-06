@@ -1,48 +1,66 @@
 <?php
 session_start();
-include "../conexion.php";
+include "conexion.php";
 
 // Solo usuarios normales pueden inscribirse
-if (!isset($_SESSION['rol']) || $_SESSION['rol'] != "usuario") {
-    header("Location: ../login.php");
+if (!isset($_SESSION['id_usuario']) || ($_SESSION['rol'] ?? '') !== 'usuario') {
+    header("Location: login.php");
     exit();
 }
 
-if (isset($_GET['id'])) {
-    $id_taller = intval($_GET['id']);
-    $id_usuario = $_SESSION['id_usuario'];
-
-    // Verificar si ya está inscrito
-    $check = "SELECT * FROM inscripciones WHERE id_usuario=$id_usuario AND id_taller=$id_taller";
-    $result = $conn->query($check);
-
-    if ($result->num_rows > 0) {
-        echo "Ya estás inscrito en este taller. <a href='listar_talleres.php'>Volver</a>";
-        exit();
-    }
-
-    // Insertar inscripción
-    $sql = "INSERT INTO inscripciones (id_usuario, id_taller, estado_pago) 
-            VALUES ($id_usuario, $id_taller, 'pendiente')";
-if ($stmt->execute()) {
-    // 👇 Notificación al admin
-    $sqlNotif = "INSERT INTO notificaciones_admin (mensaje) VALUES (?)";
-    $stmtNotif = $conn->prepare($sqlNotif);
-    $mensaje = "El usuario " . $_SESSION['nombre'] . " se inscribió al taller ID " . $id_taller;
-    $stmtNotif->bind_param("s", $mensaje);
-    $stmtNotif->execute();
-
-    if ($conn->query($sql)) {
-        echo "Inscripción realizada con éxito 🎉. <a href='mis_talleres.php'>Ver mis talleres</a>";
-    } else {
-        echo "Error: " . $conn->error;
-    }
-} else {
-    echo "ID de taller no válido.";
+$id_usuario = (int)$_SESSION['id_usuario'];
+// Aceptar id por POST o GET
+$id_taller = isset($_POST['id_taller']) ? (int)$_POST['id_taller'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+if ($id_taller <= 0) {
+    header("Location: listar_talleres.php?err=taller");
+    exit();
 }
-// Notificación para admin
-$sqlNotif = "INSERT INTO notificaciones_admin (mensaje) VALUES (?)";
-$stmtNotif = $conn->prepare($sqlNotif);
-$mensaje = "El usuario " . $_SESSION['nombre'] . " se inscribió al taller ID " . $id_taller;
-$stmtNotif->bind_param("s", $mensaje);
-$stmtNotif->execute();
+
+// Verificar que el taller exista y (por seguridad) que esté activo
+$stmtT = $conn->prepare("SELECT titulo, estado FROM talleres WHERE id_taller = ?");
+$stmtT->bind_param("i", $id_taller);
+$stmtT->execute();
+$resT = $stmtT->get_result();
+if (!$resT || $resT->num_rows === 0) {
+    header("Location: listar_talleres.php?err=noexiste");
+    exit();
+}
+$taller = $resT->fetch_assoc();
+if (strtolower($taller['estado']) !== 'activo') {
+    header("Location: listar_talleres.php?err=inactivo");
+    exit();
+}
+
+// Verificar si ya está inscrito
+$stmtC = $conn->prepare("SELECT 1 FROM inscripciones WHERE id_usuario = ? AND id_taller = ?");
+$stmtC->bind_param("ii", $id_usuario, $id_taller);
+$stmtC->execute();
+$resC = $stmtC->get_result();
+if ($resC && $resC->num_rows > 0) {
+    header("Location: mis_talleres.php?msg=ya_inscrito");
+    exit();
+}
+
+// Insertar inscripción con estado 'pendiente'
+$stmtI = $conn->prepare("INSERT INTO inscripciones (id_usuario, id_taller, estado) VALUES (?, ?, 'pendiente')");
+$stmtI->bind_param("ii", $id_usuario, $id_taller);
+if ($stmtI->execute()) {
+    // Notificación al admin
+    $mensajeAdmin = "El usuario " . ($_SESSION['nombre'] ?? ('ID ' . $id_usuario)) . " se inscribió al taller '" . $taller['titulo'] . "'.";
+    $stmtNA = $conn->prepare("INSERT INTO notificaciones_admin (mensaje) VALUES (?)");
+    $stmtNA->bind_param("s", $mensajeAdmin);
+    $stmtNA->execute();
+
+    // Notificación al usuario
+    $mensajeUser = "Te inscribiste en '" . $taller['titulo'] . "'. Tu estado es PENDIENTE. Sube tu comprobante en Mis pagos.";
+    $stmtNU = $conn->prepare("INSERT INTO notificaciones (id_usuario, mensaje) VALUES (?, ?)");
+    $stmtNU->bind_param("is", $id_usuario, $mensajeUser);
+    $stmtNU->execute();
+
+    header("Location: mis_talleres.php?msg=inscrito");
+    exit();
+}
+
+// Si falla el insert
+header("Location: listar_talleres.php?err=inscribir");
+exit();

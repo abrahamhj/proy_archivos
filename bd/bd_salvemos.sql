@@ -107,12 +107,19 @@ CREATE TABLE `pagos` (
 --
 
 CREATE TABLE `talleres` (
-  `id_taller` int(10) UNSIGNED NOT NULL,
+  `id_taller` int(11) NOT NULL,
   `titulo` varchar(150) NOT NULL,
   `descripcion` text DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
   `precio` decimal(10,2) NOT NULL,
   `fecha` date NOT NULL,
-  `qr_code` varchar(255) DEFAULT NULL,
+  `lugar` varchar(150) DEFAULT NULL,
+  `hora` time DEFAULT NULL,
+  `duracion` varchar(60) DEFAULT NULL,
+  `categoria` varchar(80) DEFAULT NULL,
+  `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
+  `qr_imagen` varchar(255) DEFAULT NULL,
+  `qr_pay_ref` varchar(255) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

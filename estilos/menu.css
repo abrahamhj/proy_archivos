@@ -191,8 +191,8 @@ footer {
 
 /* ===== MAIN ===== */
 main {
-    max-width: 1200px;
-    margin: 28px auto 64px;
+    max-width: 100%;
+    margin: 5px auto 50px;
     padding: 0 18px;
     flex: 1 0 auto; /* ocupa el espacio disponible para empujar el footer */
 }

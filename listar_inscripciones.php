@@ -3,77 +3,155 @@ session_start();
 include "conexion.php";
 
 // Solo admin puede ver las inscripciones
-if (!isset($_SESSION['rol']) || $_SESSION['rol'] != "admin") {
+if (!isset($_SESSION['id_usuario']) || ($_SESSION['rol'] ?? '') !== 'admin') {
     header("Location: login.php");
     exit();
 }
 
-$sql = "SELECT i.id_inscripcion, u.nombre AS usuario, u.email, 
-               t.titulo AS taller, t.fecha, t.precio, i.estado_pago
-        FROM inscripciones i
-        JOIN usuarios u ON i.id_usuario = u.id_usuario
-        JOIN talleres t ON i.id_taller = t.id_taller
-        ORDER BY t.fecha DESC";
+$nombre = $_SESSION['nombre'] ?? 'Administrador';
 
-$result = $conn->query($sql);
-?>
+// Notificaciones pendientes para el header
+$notificaciones_pendientes = 0;
+if ($resN = $conn->query("SELECT COUNT(*) AS c FROM notificaciones_admin WHERE leida = 0")) {
+    if ($rn = $resN->fetch_assoc()) $notificaciones_pendientes = (int)$rn['c'];
+}
 
-<h2>Listado de Inscripciones</h2>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>Usuario</th>
-        <th>Email</th>
-        <th>Taller</th>
-        <th>Fecha</th>
-        <th>Precio (Bs)</th>
-        <th>Estado de pago</th>
-        <th>Comprobante</th>
-        <th>Acción</th>
-    </tr>
+// Obtener detalle de inscripciones, ordenado para agrupar por usuario
+$sql = "
+    SELECT 
+        u.id_usuario, u.nombre, u.email,
+        t.titulo, t.fecha,
+        i.estado
+    FROM inscripciones i
+    INNER JOIN usuarios u ON u.id_usuario = i.id_usuario
+    INNER JOIN talleres t ON t.id_taller = i.id_taller
+    ORDER BY u.nombre ASC, t.fecha DESC
+";
+$res = $conn->query($sql);
 
-<?php
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        echo "<tr>";
-        echo "<td>" . $row['usuario'] . "</td>";
-        echo "<td>" . $row['email'] . "</td>";
-        echo "<td>" . $row['taller'] . "</td>";
-        echo "<td>" . $row['fecha'] . "</td>";
-        echo "<td>" . $row['precio'] . "</td>";
-        echo "<td>" . $row['estado_pago'] . "</td>";
-
-        // Mostrar comprobante si existe
-        echo "<td>";
-        if (!empty($row['comprobante'])) {
-            echo "<a href='../comprobantes/" . $row['comprobante'] . "' target='_blank'>Ver comprobante</a>
-            <form method='POST' action='rechazar_comprobante.php' style='margin-top:5px;'>
-                      <input type='hidden' name='id_inscripcion' value='" . $row['id_inscripcion'] . "'>
-                      <input type='hidden' name='archivo' value='" . $row['comprobante'] . "'>
-                      <button type='submit'>Rechazar</button>
-                  </form>";
-        } else {
-            echo "Sin comprobante";
+// Agrupar por usuario
+$usuarios = [];
+if ($res) {
+    while ($row = $res->fetch_assoc()) {
+        $uid = (int)$row['id_usuario'];
+        if (!isset($usuarios[$uid])) {
+            $usuarios[$uid] = [
+                'nombre' => $row['nombre'],
+                'email' => $row['email'],
+                'talleres' => []
+            ];
         }
-        echo "</td>";
-
-        // Formulario para actualizar estado
-
-        echo "<td>
-                <form method='POST' action='marcar_pago.php'>
-                    <input type='hidden' name='id_inscripcion' value='" . $row['id_inscripcion'] . "'>
-                    <select name='estado_pago'>
-                        <option value='pendiente' " . ($row['estado_pago'] == 'pendiente' ? 'selected' : '') . ">Pendiente</option>
-                        <option value='pagado' " . ($row['estado_pago'] == 'pagado' ? 'selected' : '') . ">Pagado</option>
-                    </select>
-                    <button type='submit'>Actualizar</button>
-                </form>
-              </td>";
-        echo "</tr>";
+        $usuarios[$uid]['talleres'][] = [
+            'titulo' => $row['titulo'],
+            'fecha' => $row['fecha'],
+            'estado' => $row['estado']
+        ];
     }
-} else {
-    echo "<tr><td colspan='8'>No hay inscripciones registradas</td></tr>";
+}
+
+function estado_badge($estado)
+{
+    $estado = strtolower((string)$estado);
+    $styles = [
+        'pendiente' => ['#b45309', '#fef3c7'], // amber-700 text on amber-100 bg
+        'pagado'    => ['#065f46', '#d1fae5'], // emerald-800 on emerald-100
+        'rechazado' => ['#991b1b', '#fee2e2'], // red-800 on red-100
+    ];
+    $pair = $styles[$estado] ?? ['#334155', '#e2e8f0']; // slate-700 on slate-200
+    return '<span style="display:inline-block;padding:.15rem .5rem;border-radius:999px;font-size:.75rem;font-weight:600;color:'
+        . $pair[0] . ';background:' . $pair[1] . ';text-transform:uppercase;">' . htmlspecialchars($estado) . '</span>';
 }
 ?>
-</table>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inscripciones · Administración</title>
+  <link rel="stylesheet" href="estilos/index.css" />
+  <link rel="stylesheet" href="estilos/menu.css" />
+  <link rel="stylesheet" href="estilos/panel_usuario.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <div class="logo">
+        <a href="index.php">
+          <img src="img/logo.jpg" alt="Logo Salvemos los Archivos Bolivia">
+        </a>
+      </div>
+      <ul class="menu" id="menu">
+        <li><a href="panel_admin.php"><i class="fa-solid fa-gauge"></i> Panel</a></li>
+        <li><a href="listar_talleres.php"><i class="fa-solid fa-chalkboard"></i> Talleres</a></li>
+        <li><a class="active" href="listar_inscripciones.php"><i class="fa-solid fa-clipboard-list"></i> Inscripciones</a></li>
+        <li><a href="pagos.php"><i class="fa-solid fa-cash-register"></i> Pagos</a></li>
+        <li><a href="notificaciones_admin.php"><i class="fa-solid fa-bell"></i> Notificaciones <?php if ($notificaciones_pendientes > 0) echo '(' . $notificaciones_pendientes . ')'; ?></a></li>
+      </ul>
+      <div class="actions">
+        <a class="btn danger" href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+      </div>
+    </div>
+  </header>
 
-<a href="../panel.php">Volver al panel</a>
+  <main>
+    <div class="wrap">
+      <h2 class="greet">Inscripciones de usuarios</h2>
+
+      <div class="card">
+        <div style="overflow:auto">
+          <table class="table" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Usuario</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Email</th>
+                <th style="text-align:right; padding:10px; border-bottom:1px solid #e7eef2;">Total</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Talleres inscritos</th>
+              </tr>
+            </thead>
+            <tbody>
+            <?php if (count($usuarios)): ?>
+              <?php foreach ($usuarios as $u): ?>
+                <tr>
+                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; min-width:180px;"><?php echo htmlspecialchars($u['nombre']); ?></td>
+                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; min-width:220px;"><?php echo htmlspecialchars($u['email']); ?></td>
+                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; text-align:right; width:80px; font-variant-numeric: tabular-nums;">
+                    <?php echo count($u['talleres']); ?>
+                  </td>
+                  <td style="padding:10px; border-bottom:1px solid #f1f5f9;">
+                    <?php if (count($u['talleres'])): ?>
+                      <ul class="clean" style="margin:0; padding-left:18px;">
+                        <?php foreach ($u['talleres'] as $t): ?>
+                          <li style="margin:6px 0;">
+                            <span style="font-weight:600;"><?php echo htmlspecialchars($t['titulo']); ?></span>
+                            <span class="muted"> · <?php echo htmlspecialchars(date('d/m/Y', strtotime($t['fecha']))); ?></span>
+                            <span> · <?php echo estado_badge($t['estado']); ?></span>
+                          </li>
+                        <?php endforeach; ?>
+                      </ul>
+                    <?php else: ?>
+                      —
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="4" style="padding:14px; text-align:center;">No hay inscripciones registradas</td>
+              </tr>
+            <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p style="margin-top:16px;"><a class="btn" href="panel_admin.php">← Volver al panel</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© <?php echo date('Y'); ?> Salvemos los Archivos - Bolivia · Administración</p>
+  </footer>
+</body>
+</html>
+

@@ -23,7 +23,13 @@
 }
 
 .wrap {
-    max-width: 1100px;
+    max-width: 80%;
+    margin: 20px auto;
+    padding: 12px
+}
+
+.wrap-admin {
+    max-width: 100%;
     margin: 20px auto;
     padding: 12px
 }

@@ -1,0 +1,127 @@
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 3px rgba(0, 123, 255, .3);
+}
+
+.alert-success {
+    background: #e9f8ef;
+    border: 1px solid #bcdcc2;
+    color: #157347;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 10px 0
+}
+
+.alert-error {
+    background: #fdecea;
+    border: 1px solid #f5c2c7;
+    color: #a4282f;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 10px 0
+}
+
+
+@media (max-width: 900px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    border-bottom: 1px solid #e7eef2;
+    padding: 10px;
+    text-align: left;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .8rem;
+    background: #eef2f7;
+}
+
+.badge.admin {
+    background: #ffe8cc;
+    color: #ad6800;
+}
+
+.badge.usuario {
+    background: #e6fffb;
+    color: #006d75;
+}
+
+.badge.invitado {
+    background: #f0f5ff;
+    color: #2f54eb;
+}
+
+.muted {
+    color: #667085;
+    font-size: .9rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 8px;
+    margin: 8px 0;
+}
+
+.alert.error {
+    background: #fff1f0;
+    color: #cf1322;
+    border: 1px solid #ffa39e;
+}
+
+.alert.success {
+    background: #f6ffed;
+    color: #389e0d;
+    border: 1px solid #b7eb8f;
+}

@@ -99,9 +99,10 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
 
       <ul class="menu" id="menu">
         <li><a href="index.php"><i class="fa-solid fa-house"></i> Inicio</a></li>
-        <li><a href="mis_talleres.php"><i class="fa-solid fa-chalkboard-user"></i> Mis talleres</a></li>
-        <li><a href="listar_archivos.php"><i class="fa-solid fa-folder-open"></i> Mis archivos</a></li>
-        <li><a href="notificaciones.php"><i class="fa-solid fa-bell"></i> Notificaciones <?php if ($notificaciones_pendientes > 0) echo '(' . $notificaciones_pendientes . ')'; ?></a></li>
+        <li><a href="listar_talleres.php"><i class="fa-solid fa-chalkboard"></i> Talleres</a></li>
+        <li><a href="pagos.php"><i class="fa-solid fa-cash-register"></i> Mis pagos</a></li>
+        <li><a class="active" href="mis_talleres.php"><i class="fa-solid fa-list-check"></i> Mis talleres</a></li>
+        <li><a href="notificaciones.php"><i class="fa-solid fa-bell"></i> Notificaciones</a></li>
       </ul>
 
       <div class="actions">
@@ -153,7 +154,7 @@ function txt_trunc($text, $width = 80, $ellipsis = '…')
             <a class="btn" href="mis_talleres.php">Ver detalles</a>
           <?php else: ?>
             <p class="muted">Aún no tienes talleres próximos. Explora e inscríbete en uno.</p>
-            <a class="btn outline" href="inscribirse.php">Explorar talleres</a>
+            <a class="btn outline" href="listar_talleres.php">Explorar talleres</a>
           <?php endif; ?>
         </section>
 
