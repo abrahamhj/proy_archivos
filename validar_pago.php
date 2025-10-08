@@ -71,9 +71,18 @@ if ($accion === 'aprobar') {
 }
 
 if ($accion === 'rechazar') {
-  // Mantener pago no validado y estado rechazado
+  // Marcar pago como rechazado (validado=2) y estado de inscripción 'rechazado'
   $conn->begin_transaction();
   try {
+    $upP = $conn->prepare("UPDATE pagos SET validado = 2 WHERE id_pago = ?");
+    $upP->bind_param("i", $id_pago);
+    $upP->execute();
+
+    // Extra: invalidar cualquier otro pago pendiente de esta inscripción
+    $upPOtros = $conn->prepare("UPDATE pagos SET validado = 2 WHERE id_inscripcion = ? AND validado = 0");
+    $upPOtros->bind_param("i", $id_inscripcion);
+    $upPOtros->execute();
+
     $upI = $conn->prepare("UPDATE inscripciones SET estado = 'rechazado' WHERE id_inscripcion = ?");
     $upI->bind_param("i", $id_inscripcion);
     $upI->execute();

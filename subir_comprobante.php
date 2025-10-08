@@ -28,11 +28,7 @@ $row = $res->fetch_assoc();
 $titulo_taller = $row['titulo'];
 $estado_actual = strtolower((string)($row['estado'] ?? ''));
 
-// Bloquear re-subidas si ya está en revisión o pagado
-if ($estado_actual === 'pendiente') {
-  header("Location: pagos.php?error=ya_subido");
-  exit();
-}
+// Si ya está pagado, no permitir re-subidas
 if ($estado_actual === 'pagado') {
   header("Location: pagos.php?error=ya_pagado");
   exit();
@@ -78,10 +74,62 @@ if (!move_uploaded_file($tmp, $dest)) {
   exit();
 }
 
-// Registrar pago pendiente de validación
-$stmtIns = $conn->prepare("INSERT INTO pagos (id_inscripcion, comprobante, validado) VALUES (?, ?, 0)");
-$stmtIns->bind_param("is", $id_inscripcion, $filename);
-$okPago = $stmtIns->execute();
+// Buscar si ya existe un pago para esta inscripción (usamos el más reciente)
+$id_pago_existente = 0;
+$comprobante_anterior = '';
+if ($q = $conn->prepare("SELECT id_pago, comprobante FROM pagos WHERE id_inscripcion = ? ORDER BY id_pago DESC LIMIT 1")) {
+  $q->bind_param("i", $id_inscripcion);
+  $q->execute();
+  $r = $q->get_result();
+  if ($r && $r->num_rows > 0) {
+    $rowPago = $r->fetch_assoc();
+    $id_pago_existente = (int)$rowPago['id_pago'];
+    $comprobante_anterior = trim((string)($rowPago['comprobante'] ?? ''));
+  }
+}
+
+// Si había un comprobante previo en ese pago, eliminar el archivo para no acumular
+if ($comprobante_anterior !== '') {
+  $oldPath = __DIR__ . "/uploads/comprobantes/" . $comprobante_anterior;
+  if (is_file($oldPath)) { @unlink($oldPath); }
+}
+
+// Si existe pago, actualizar. Si no, insertar uno nuevo
+$okPago = false;
+$currentPagoId = 0;
+if ($id_pago_existente > 0) {
+  $stmtUp = $conn->prepare("UPDATE pagos SET comprobante = ?, validado = 0, fecha_pago = NOW() WHERE id_pago = ?");
+  $stmtUp->bind_param("si", $filename, $id_pago_existente);
+  $okPago = $stmtUp->execute();
+  $currentPagoId = $id_pago_existente;
+} else {
+  $stmtIns = $conn->prepare("INSERT INTO pagos (id_inscripcion, comprobante, validado, fecha_pago) VALUES (?, ?, 0, NOW())");
+  $stmtIns->bind_param("is", $id_inscripcion, $filename);
+  $okPago = $stmtIns->execute();
+  $currentPagoId = (int)$conn->insert_id;
+}
+
+// Asegurar que no queden otros pagos pendientes para esta inscripción
+if ($currentPagoId > 0) {
+  // Eliminar archivos de otros pagos pendientes (opcional)
+  if ($selPend = $conn->prepare("SELECT comprobante FROM pagos WHERE id_inscripcion = ? AND validado = 0 AND id_pago <> ?")) {
+    $selPend->bind_param("ii", $id_inscripcion, $currentPagoId);
+    $selPend->execute();
+    $rsPend = $selPend->get_result();
+    while ($pp = $rsPend->fetch_assoc()) {
+      $cf = trim((string)($pp['comprobante'] ?? ''));
+      if ($cf !== '') {
+        $p = __DIR__ . "/uploads/comprobantes/" . $cf;
+        if (is_file($p)) { @unlink($p); }
+      }
+    }
+  }
+  // Invalidar otros pendientes
+  if ($upOthers = $conn->prepare("UPDATE pagos SET validado = 2 WHERE id_inscripcion = ? AND validado = 0 AND id_pago <> ?")) {
+    $upOthers->bind_param("ii", $id_inscripcion, $currentPagoId);
+    $upOthers->execute();
+  }
+}
 
 // Asegurar estado de la inscripción como 'pendiente'
 $conn->query("UPDATE inscripciones SET estado='pendiente', comprobante=NULL WHERE id_inscripcion = " . $id_inscripcion);

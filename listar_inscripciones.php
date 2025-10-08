@@ -72,6 +72,20 @@ function estado_badge($estado)
   <link rel="stylesheet" href="estilos/menu.css" />
   <link rel="stylesheet" href="estilos/panel_usuario.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .tbl-insc{ width:100%; border-collapse:collapse; table-layout:fixed; }
+    .tbl-insc th,.tbl-insc td{ padding:10px; border-bottom:1px solid #e7eef2; vertical-align:top; }
+    .tbl-insc .col-user{ width:220px; }
+    .tbl-insc .col-email{ width:260px; }
+    .tbl-insc .col-total{ width:90px; text-align:right; font-variant-numeric:tabular-nums; }
+    .tbl-insc .col-talleres{ width:auto; }
+    .tbl-insc .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    @media (max-width: 900px){
+      .tbl-insc .col-user{ width:180px; }
+      .tbl-insc .col-email{ width:200px; }
+      .tbl-insc .col-total{ width:70px; }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -100,25 +114,23 @@ function estado_badge($estado)
 
       <div class="card">
         <div style="overflow:auto">
-          <table class="table" style="width:100%; border-collapse:collapse;">
+          <table class="table tbl-insc">
             <thead>
               <tr>
-                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Usuario</th>
-                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Email</th>
-                <th style="text-align:right; padding:10px; border-bottom:1px solid #e7eef2;">Total</th>
-                <th style="text-align:left; padding:10px; border-bottom:1px solid #e7eef2;">Talleres inscritos</th>
+                <th class="col-user" style="text-align:left;">Usuario</th>
+                <th class="col-email" style="text-align:left;">Email</th>
+                <th class="col-total">Total</th>
+                <th class="col-talleres" style="text-align:left;">Talleres inscritos</th>
               </tr>
             </thead>
             <tbody>
             <?php if (count($usuarios)): ?>
               <?php foreach ($usuarios as $u): ?>
                 <tr>
-                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; min-width:180px;"><?php echo htmlspecialchars($u['nombre']); ?></td>
-                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; min-width:220px;"><?php echo htmlspecialchars($u['email']); ?></td>
-                  <td style="padding:10px; border-bottom:1px solid #f1f5f9; text-align:right; width:80px; font-variant-numeric: tabular-nums;">
-                    <?php echo count($u['talleres']); ?>
-                  </td>
-                  <td style="padding:10px; border-bottom:1px solid #f1f5f9;">
+                  <td class="col-user"><span class="truncate"><?php echo htmlspecialchars($u['nombre']); ?></span></td>
+                  <td class="col-email"><span class="truncate"><?php echo htmlspecialchars($u['email']); ?></span></td>
+                  <td class="col-total"><?php echo count($u['talleres']); ?></td>
+                  <td class="col-talleres">
                     <?php if (count($u['talleres'])): ?>
                       <ul class="clean" style="margin:0; padding-left:18px;">
                         <?php foreach ($u['talleres'] as $t): ?>

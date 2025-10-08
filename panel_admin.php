@@ -17,7 +17,7 @@ function get_count($conn, $sql)
 $cnt_usuarios = get_count($conn, "SELECT COUNT(*) FROM usuarios WHERE rol='usuario'");
 $cnt_talleres = get_count($conn, "SELECT COUNT(*) FROM talleres WHERE estado='activo'");
 $cnt_archivos = get_count($conn, "SELECT COUNT(*) FROM archivos");
-$cnt_insc_pend = get_count($conn, "SELECT COUNT(*) FROM inscripciones WHERE estado='pendiente'");
+$cnt_insc_pend = get_count($conn, "SELECT COUNT(*) FROM inscripciones");
 $cnt_pagos_pend = get_count($conn, "SELECT COUNT(*) FROM pagos WHERE validado=0");
 $notificaciones_pendientes = get_count($conn, "SELECT COUNT(*) FROM notificaciones_admin WHERE leida = 0");
 

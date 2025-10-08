@@ -20,12 +20,8 @@ if ($rol === 'admin') {
 }
 
 /* ====== Utils ====== */
-function h($s)
-{
-  return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-}
-function estado_badge($estado)
-{
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function estado_badge($estado){
   $estado = strtolower((string)$estado);
   $styles = [
     'pendiente' => ['#b45309', '#fef3c7'],
@@ -37,54 +33,30 @@ function estado_badge($estado)
     $pair[0] . ';background:' . $pair[1] . ';text-transform:uppercase;">' . h($estado) . '</span>';
 }
 
-// ====== Flash messages (success/error) ======
+/* ====== Flash messages ====== */
 $flash_msg = '';
 $flash_type = '';
 if (isset($_GET['msg'])) {
-  if ($_GET['msg'] === 'subido') {
-    $flash_msg = "Comprobante subido correctamente. Está pendiente de validación.";
-    $flash_type = 'success';
-  } elseif ($_GET['msg'] === 'aprobado') {
-    $flash_msg = "Pago aprobado correctamente.";
-    $flash_type = 'success';
-  } elseif ($_GET['msg'] === 'rechazado') {
-    $flash_msg = "Pago rechazado.";
-    $flash_type = 'error';
-  }
+  if ($_GET['msg'] === 'subido')   { $flash_msg = "Comprobante subido correctamente. Está pendiente de validación."; $flash_type = 'success'; }
+  elseif ($_GET['msg'] === 'aprobado') { $flash_msg = "Pago aprobado correctamente."; $flash_type = 'success'; }
+  elseif ($_GET['msg'] === 'rechazado'){ $flash_msg = "Pago rechazado."; $flash_type = 'error'; }
 }
 if (isset($_GET['error'])) {
   $flash_type = 'error';
   switch ($_GET['error']) {
-    case 'inscripcion':
-      $flash_msg = 'Inscripción no válida.';
-      break;
-    case 'archivo':
-      $flash_msg = 'Error al recibir el archivo.';
-      break;
-    case 'tipo':
-      $flash_msg = 'Tipo de archivo no permitido. Sube imagen o PDF.';
-      break;
-    case 'tamano':
-      $flash_msg = 'El archivo excede el tamaño máximo (5MB).';
-      break;
-    case 'guardar':
-      $flash_msg = 'No se pudo guardar el archivo. Intenta nuevamente.';
-      break;
-    case 'ya_subido':
-      $flash_msg = 'Ya enviaste un comprobante para este taller. Espera la validación.';
-      break;
-    case 'ya_pagado':
-      $flash_msg = 'Esta inscripción ya está pagada.';
-      break;
-    default:
-      $flash_msg = 'Ocurrió un error.';
-      break;
+    case 'inscripcion': $flash_msg = 'Inscripción no válida.'; break;
+    case 'archivo':     $flash_msg = 'Error al recibir el archivo.'; break;
+    case 'tipo':        $flash_msg = 'Tipo de archivo no permitido. Sube imagen o PDF.'; break;
+    case 'tamano':      $flash_msg = 'El archivo excede el tamaño máximo (5MB).'; break;
+    case 'guardar':     $flash_msg = 'No se pudo guardar el archivo. Intenta nuevamente.'; break;
+    case 'ya_subido':   $flash_msg = 'Ya enviaste un comprobante para este taller. Espera la validación.'; break;
+    case 'ya_pagado':   $flash_msg = 'Esta inscripción ya está pagada.'; break;
+    default:            $flash_msg = 'Ocurrió un error.'; break;
   }
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -94,36 +66,73 @@ if (isset($_GET['error'])) {
   <link rel="stylesheet" href="estilos/panel_usuario.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
-    /* Base tabla */
-.tbl{ width:100%; border-collapse:collapse; table-layout:fixed; }
-.tbl th,.tbl td{ border-bottom:1px solid #e7eef2; padding:10px; vertical-align:middle; text-align:left; }
+    /* Tabla base */
+    .tbl{ width:100%; border-collapse:collapse; table-layout:fixed; }
+    .tbl th,.tbl td{ border-bottom:1px solid #e7eef2; padding:10px; vertical-align:middle; text-align:left; }
+    .tbl th{ white-space:nowrap; }
+    .tbl .col-act{ white-space:nowrap; }
 
-/* Evitar que los headers se partan en 2 líneas */
-.tbl th{ white-space:nowrap; }
+    /* Mantener columnas clave con ancho mínimo */
+    .tbl .col-state{ width:140px; }
+    .tbl .col-date{  width:110px; }
+    .tbl .col-price{ width:120px; }
+    .tbl .col-act{   width:420px; }
 
-/* Título del taller: 2 líneas con elipsis */
-.truncate-2{
-  min-width:0;
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  word-break:break-word;
-}
+    .truncate-2{
+      min-width:0;
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:2;
+      line-clamp:2;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      word-break:break-word;
+    }
 
-/* Acciones: mantener los 2 botones en una sola fila */
-.row-actions{ display:flex; gap:12px; align-items:center; justify-content:flex-end; flex-wrap:nowrap; }
-.row-actions .btn{ white-space:nowrap; }
+    /* Miniatura QR */
+    .qr-thumb-btn{
+      width:40px; height:40px; padding:0; border:0; background:transparent; cursor:zoom-in;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .qr-thumb{
+      width:100%; height:100%; object-fit:contain;
+      border:1px solid #e7eef2; border-radius:6px; background:#fff;
+      display:block;
+    }
+    .qr-group{ display:flex; align-items:center; gap:10px; }
 
-/* Contenedor con scroll horizontal si no alcanza el ancho */
-.table-scroll{ overflow-x:auto; }
+    /* Pila vertical dentro de la celda "Acción" */
+    .actions-stack{ display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
 
-/* Compactar un poco los botones en pantallas chicas */
-@media (max-width: 1100px){
-  .row-actions .btn{ padding:8px 12px; font-size:.95rem; }
-}
+    /* Línea de formulario "Subir" */
+    .row-actions{
+      display:flex; gap:12px; align-items:center; justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    /* Input de archivo controlado */
+    .file-narrow{
+      width:100%; max-width:240px; height:40px; align-self:center;
+    }
+    .row-actions .btn{ white-space:nowrap; margin:0; line-height:1; display:inline-flex; align-items:center; height:40px; }
+    .row-actions form{ display:flex; align-items:center; gap:12px; margin:0; }
+    .row-actions input[type="file"]{ font-size:.95rem; }
 
+    .table-scroll{ overflow-x:auto; }
+
+    /* Modal imagen */
+    #img-modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9999; align-items:center; justify-content:center; }
+    #img-modal img{ max-width:90vw; max-height:90vh; box-shadow:0 10px 30px rgba(0,0,0,.5); border-radius:8px; }
+
+    @media (max-width: 1100px){
+      .row-actions .btn{ padding:8px 12px; font-size:.95rem; }
+      .tbl .col-act{ width:360px; }
+      .file-narrow{ max-width:200px; }
+    }
+    @media (max-width: 820px){
+      .tbl .col-act{ width:100%; }
+    }
+
+    .note-rechazo{ color:#991b1b; font-size:.9rem; text-align:right; margin-bottom:4px; }
   </style>
 </head>
 
@@ -157,6 +166,7 @@ if (isset($_GET['error'])) {
       <?php if ($flash_msg): ?>
         <div class="alert <?php echo $flash_type === 'success' ? 'alert-success' : 'alert-error'; ?>"><?php echo h($flash_msg); ?></div>
       <?php endif; ?>
+
       <?php if ($rol === 'admin'): ?>
         <!-- =================== ADMIN: Validación de pagos =================== -->
         <h2 class="greet">Validación de pagos</h2>
@@ -164,14 +174,14 @@ if (isset($_GET['error'])) {
           <div style="overflow:auto">
             <?php
             $sqlPend = "SELECT p.id_pago, p.comprobante, p.fecha_pago, p.validado,
-                             i.id_inscripcion, i.estado, u.nombre AS usuario, u.email,
-                             t.titulo AS taller
-                      FROM pagos p
-                      INNER JOIN inscripciones i ON i.id_inscripcion = p.id_inscripcion
-                      INNER JOIN usuarios u ON u.id_usuario = i.id_usuario
-                      INNER JOIN talleres t ON t.id_taller = i.id_taller
-                      WHERE p.validado = 0
-                      ORDER BY p.fecha_pago DESC";
+                               i.id_inscripcion, i.estado, u.nombre AS usuario, u.email,
+                               t.titulo AS taller
+                        FROM pagos p
+                        INNER JOIN inscripciones i ON i.id_inscripcion = p.id_inscripcion
+                        INNER JOIN usuarios u ON u.id_usuario = i.id_usuario
+                        INNER JOIN talleres t ON t.id_taller = i.id_taller
+                        WHERE p.validado = 0
+                        ORDER BY p.fecha_pago DESC";
             $pend = $conn->query($sqlPend);
             ?>
             <table class="table tbl tbl-pend">
@@ -188,48 +198,44 @@ if (isset($_GET['error'])) {
               </thead>
               <tbody>
                 <?php if ($pend && $pend->num_rows > 0): while ($p = $pend->fetch_assoc()): ?>
-                    <tr>
-                      <td><?php echo h($p['usuario']); ?></td>
-                      <td><?php echo h($p['email']); ?></td>
-                      <td>
-                        <div class="title-2l"><?php echo h($p['taller']); ?></div>
-                      </td>
-                      <td><?php echo h(date('d/m/Y H:i', strtotime($p['fecha_pago']))); ?></td>
-                      <td>
-                        <?php if (!empty($p['comprobante'])): ?>
-                          <a class="btn outline" href="<?php echo 'uploads/comprobantes/' . rawurlencode($p['comprobante']); ?>" target="_blank">
-                            <i class="fa-solid fa-file"></i> Ver
-                          </a>
-                          <?php else: ?>—<?php endif; ?>
-                      </td>
-                      <td><?php echo estado_badge($p['estado']); ?></td>
-                      <td style="text-align:right;">
-                        <div class="row-actions">
-                          <form action="validar_pago.php" method="POST">
-                            <input type="hidden" name="id_pago" value="<?php echo (int)$p['id_pago']; ?>" />
-                            <button class="btn" name="accion" value="aprobar" onclick="return confirm('¿Aprobar pago?');">
-                              <i class="fa-solid fa-check"></i> Aprobar
-                            </button>
-                          </form>
-                          <form action="validar_pago.php" method="POST">
-                            <input type="hidden" name="id_pago" value="<?php echo (int)$p['id_pago']; ?>" />
-                            <button class="btn danger" name="accion" value="rechazar" onclick="return confirm('¿Rechazar pago?');">
-                              <i class="fa-solid fa-xmark"></i> Rechazar
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  <?php endwhile;
-                else: ?>
                   <tr>
-                    <td colspan="7" style="padding:14px;text-align:center;">No hay pagos pendientes de validación</td>
+                    <td><?php echo h($p['usuario']); ?></td>
+                    <td><?php echo h($p['email']); ?></td>
+                    <td><div class="title-2l"><?php echo h($p['taller']); ?></div></td>
+                    <td><?php echo h(date('d/m/Y H:i', strtotime($p['fecha_pago']))); ?></td>
+                    <td>
+                      <?php if (!empty($p['comprobante'])): ?>
+                        <a class="btn outline" href="<?php echo 'uploads/comprobantes/' . rawurlencode($p['comprobante']); ?>" target="_blank">
+                          <i class="fa-solid fa-file"></i> Ver
+                        </a>
+                      <?php else: ?>—<?php endif; ?>
+                    </td>
+                    <td><?php echo estado_badge($p['estado']); ?></td>
+                    <td style="text-align:right;">
+                      <div class="row-actions">
+                        <form action="validar_pago.php" method="POST">
+                          <input type="hidden" name="id_pago" value="<?php echo (int)$p['id_pago']; ?>" />
+                          <button class="btn" name="accion" value="aprobar" onclick="return confirm('¿Aprobar pago?');">
+                            <i class="fa-solid fa-check"></i> Aprobar
+                          </button>
+                        </form>
+                        <form action="validar_pago.php" method="POST">
+                          <input type="hidden" name="id_pago" value="<?php echo (int)$p['id_pago']; ?>" />
+                          <button class="btn danger" name="accion" value="rechazar" onclick="return confirm('¿Rechazar pago?');">
+                            <i class="fa-solid fa-xmark"></i> Rechazar
+                          </button>
+                        </form>
+                      </div>
+                    </td>
                   </tr>
+                <?php endwhile; else: ?>
+                  <tr><td colspan="7" style="padding:14px;text-align:center;">No hay pagos pendientes de validación</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>
           </div>
         </div>
+
       <?php else: ?>
         <!-- =================== USUARIO: Subir comprobantes =================== -->
         <h2 class="greet">Subir comprobantes de pago</h2>
@@ -238,11 +244,11 @@ if (isset($_GET['error'])) {
           <div style="overflow:auto">
             <?php
             $sqlMis = "SELECT i.id_inscripcion, i.estado, t.titulo, t.fecha, t.precio, t.qr_imagen,
-                             (SELECT COUNT(*) FROM pagos p WHERE p.id_inscripcion = i.id_inscripcion AND p.validado = 0) AS pagos_pendientes
-                     FROM inscripciones i
-                     INNER JOIN talleres t ON t.id_taller = i.id_taller
-                     WHERE i.id_usuario = ?
-                     ORDER BY t.fecha DESC";
+                              (SELECT COUNT(*) FROM pagos p WHERE p.id_inscripcion = i.id_inscripcion AND p.validado = 0) AS pagos_pendientes
+                       FROM inscripciones i
+                       INNER JOIN talleres t ON t.id_taller = i.id_taller
+                       WHERE i.id_usuario = ?
+                       ORDER BY t.fecha DESC";
             $stmtMis = $conn->prepare($sqlMis);
             $stmtMis->bind_param("i", $id_user);
             $stmtMis->execute();
@@ -260,48 +266,49 @@ if (isset($_GET['error'])) {
               </thead>
               <tbody>
                 <?php if ($mis && $mis->num_rows > 0): while ($r = $mis->fetch_assoc()): $estado_row = strtolower((string)$r['estado']); ?>
-                    <tr>
-                      <td>
-                        <div class="title-2l" title="<?php echo h($r['titulo']); ?>"><?php echo h($r['titulo']); ?></div>
-                      </td>
-                      <td><?php echo h(date('d/m/Y', strtotime($r['fecha']))); ?></td>
-                      <td class="col-price"><?php echo number_format((float)$r['precio'], 2, '.', ''); ?></td>
-                      <td><?php echo estado_badge($r['estado']); ?></td>
-                      <td class="col-act" style="text-align:right;">
-                        <?php if (strtolower($r['estado']) === 'pagado'): ?>
-                          <span class="muted">Pago aprobado</span>
-                        <?php elseif ($estado_row === 'pendiente'): ?>
-                          <span class="muted">Comprobante enviado — en revisión</span>
-                        <?php else: ?>
-                          <div class="row-actions">
-                            <?php $qr = trim((string)($r['qr_imagen'] ?? ''));
-                            if ($qr): ?>
-                              <img src="<?php echo h($qr); ?>" alt="QR de pago" class="qr-thumb"
-                                onclick="openImgModal('<?php echo h($qr, ENT_QUOTES); ?>')"
-                                onerror="this.style.display='none'">
-                              <button type="button" class="btn outline"
-                                onclick="openImgModal('<?php echo h($qr, ENT_QUOTES); ?>')">
+                  <tr>
+                    <td><div class="title-2l" title="<?php echo h($r['titulo']); ?>"><?php echo h($r['titulo']); ?></div></td>
+                    <td><?php echo h(date('d/m/Y', strtotime($r['fecha']))); ?></td>
+                    <td class="col-price"><?php echo number_format((float)$r['precio'], 2, '.', ''); ?></td>
+                    <td><?php echo estado_badge($r['estado']); ?></td>
+                    <td class="col-act" style="text-align:right;">
+                      <?php $pend_count = isset($r['pagos_pendientes']) ? (int)$r['pagos_pendientes'] : 0; ?>
+                      <?php if ($estado_row === 'pagado'): ?>
+                        <span class="muted">Pago aprobado</span>
+                      <?php elseif ($estado_row === 'pendiente' && $pend_count > 0): ?>
+                        <span class="muted">Comprobante enviado — en revisión</span>
+                      <?php else: ?>
+                        <div class="actions-stack">
+
+                          <?php $qr = trim((string)($r['qr_imagen'] ?? '')); if ($qr): ?>
+                            <div class="qr-group">
+                              <button type="button" class="qr-thumb-btn" data-src="<?php echo h($qr); ?>">
+                                <img src="<?php echo h($qr); ?>" alt="QR de pago" class="qr-thumb"
+                                     onerror="this.closest('.qr-thumb-btn').style.display='none'">
+                              </button>
+                              <button type="button" class="btn outline qr-open-btn" data-src="<?php echo h($qr); ?>">
                                 <i class="fa-solid fa-magnifying-glass"></i> Ver QR
                               </button>
-                            <?php endif; ?>
+                            </div>
+                          <?php endif; ?>
 
+                          <div class="row-actions">
                             <form action="subir_comprobante.php" method="POST" enctype="multipart/form-data">
                               <input type="hidden" name="id_inscripcion" value="<?php echo (int)$r['id_inscripcion']; ?>" />
-                              <?php if ($estado_row === 'rechazado'): ?>
-                                <span class="muted" style="color:#991b1b">Pago rechazado, vuelve a subir un comprobante.</span>
-                              <?php endif; ?>
                               <input class="file-narrow" type="file" name="comprobante" accept="image/*,application/pdf" required />
                               <button class="btn" type="submit"><i class="fa-solid fa-upload"></i> Subir</button>
                             </form>
                           </div>
-                        <?php endif; ?>
-                      </td>
-                    </tr>
-                  <?php endwhile;
-                else: ?>
-                  <tr>
-                    <td colspan="5" style="padding:14px;text-align:center;">No tienes inscripciones registradas</td>
+
+                          <?php if ($estado_row === 'rechazado'): ?>
+                            <div class="note-rechazo">Pago rechazado, vuelve a subir un comprobante.</div>
+                          <?php endif; ?>
+                        </div>
+                      <?php endif; ?>
+                    </td>
                   </tr>
+                <?php endwhile; else: ?>
+                  <tr><td colspan="5" style="padding:14px;text-align:center;">No tienes inscripciones registradas</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>
@@ -330,34 +337,32 @@ if (isset($_GET['error'])) {
         m.style.display = 'flex';
       }
     }
-
     function closeImgModal() {
       const m = document.getElementById('img-modal');
-      if (m) {
-        m.style.display = 'none';
-      }
+      if (m) m.style.display = 'none';
     }
     (function() {
       const m = document.getElementById('img-modal');
       if (!m) return;
-      m.addEventListener('click', e => {
-        if (e.target === m) closeImgModal();
-      });
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeImgModal();
-      });
+      m.addEventListener('click', e => { if (e.target === m) closeImgModal(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImgModal(); });
     })();
 
+    // Delegación: abre el modal si clickean la miniatura o el botón "Ver QR"
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.qr-thumb-btn, .qr-open-btn');
+      if (!btn) return;
+      const src = btn.getAttribute('data-src');
+      if (src) openImgModal(src);
+    });
+
+    // Autocierre de alertas
     (function autoHideAlert() {
       const el = document.querySelector('.alert');
       if (!el) return;
       setTimeout(() => {
         el.classList.add('alert-hide');
-        setTimeout(() => {
-          try {
-            el.remove();
-          } catch (_) {}
-        }, 400);
+        setTimeout(() => { try { el.remove(); } catch(_){} }, 400);
       }, 3000);
     })();
   </script>
@@ -366,5 +371,4 @@ if (isset($_GET['error'])) {
     <p>© <?php echo date('Y'); ?> Salvemos los Archivos - Bolivia</p>
   </footer>
 </body>
-
 </html>
