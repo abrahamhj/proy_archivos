@@ -30,8 +30,13 @@ SET time_zone = "+00:00";
 CREATE TABLE `archivos` (
   `id_archivo` int(10) UNSIGNED NOT NULL,
   `nombre` varchar(150) NOT NULL,
-  `ruta` varchar(255) NOT NULL,
+  `nombre_original` varchar(255) DEFAULT NULL,
+  `descripcion` text DEFAULT NULL,
+  `ruta` varchar(512) NOT NULL,
   `tipo` enum('documento','imagen','video') DEFAULT NULL,
+  `mime` varchar(100) DEFAULT NULL,
+  `extension` varchar(10) DEFAULT NULL,
+  `peso` int DEFAULT NULL,
   `id_usuario` int(10) UNSIGNED NOT NULL,
   `fecha_subida` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -155,7 +160,8 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `email`, `password`, `rol`, `fec
 --
 ALTER TABLE `archivos`
   ADD PRIMARY KEY (`id_archivo`),
-  ADD KEY `idx_archivos_usuario` (`id_usuario`);
+  ADD KEY `idx_archivos_usuario` (`id_usuario`),
+  ADD KEY `idx_archivos_fecha` (`fecha_subida`);
 
 --
 -- Indices de la tabla `inscripciones`
